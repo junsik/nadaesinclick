@@ -20,7 +20,7 @@
 
 ### 다운로드
 
-[Releases](../../releases) 페이지에서 최신 버전을 다운로드하세요.
+[Releases](https://github.com/junsik/nadaesinclick/releases) 페이지에서 최신 버전을 다운로드하세요.
 
 ### 직접 빌드
 
@@ -58,7 +58,7 @@ make
 
 ## 빌드 상태
 
-[![Build](../../actions/workflows/build.yml/badge.svg)](../../actions/workflows/build.yml)
+[![Build](https://github.com/junsik/nadaesinclick/actions/workflows/build.yml/badge.svg)](https://github.com/junsik/nadaesinclick/actions/workflows/build.yml)
 
 ## 라이선스
 
