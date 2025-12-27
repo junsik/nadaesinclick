@@ -4,8 +4,14 @@
 #include <windows.h>
 
 // Window dimensions
-#define WINDOW_WIDTH    420
-#define WINDOW_HEIGHT   505
+#define WINDOW_WIDTH    415
+#define WINDOW_HEIGHT   500
+
+// Initialize modern UI font (Segoe UI)
+void InitUIFont();
+
+// Cleanup UI font
+void CleanupUIFont();
 
 // Initialize and create the main window
 HWND CreateMainWindow(HINSTANCE hInstance);

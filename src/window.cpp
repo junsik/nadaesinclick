@@ -7,6 +7,53 @@
 #include <stdio.h>
 
 static std::map<int, HWND> g_controls;
+static HFONT g_hFont = nullptr;
+
+// Apply modern font to a control
+static void
+ApplyFont(HWND hWnd)
+{
+    if (g_hFont)
+    {
+        SendMessage(hWnd, WM_SETFONT, (WPARAM)g_hFont, TRUE);
+    }
+}
+
+// Initialize modern UI font (Segoe UI)
+void
+InitUIFont()
+{
+    if (!g_hFont)
+    {
+        g_hFont = CreateFont(
+            -14,                    // Height (negative = character height)
+            0,                      // Width
+            0,                      // Escapement
+            0,                      // Orientation
+            FW_NORMAL,              // Weight
+            FALSE,                  // Italic
+            FALSE,                  // Underline
+            FALSE,                  // StrikeOut
+            DEFAULT_CHARSET,        // CharSet
+            OUT_DEFAULT_PRECIS,     // OutPrecision
+            CLIP_DEFAULT_PRECIS,    // ClipPrecision
+            CLEARTYPE_QUALITY,      // Quality
+            DEFAULT_PITCH | FF_SWISS, // PitchAndFamily
+            L"Segoe UI"             // Font name
+        );
+    }
+}
+
+// Cleanup UI font
+void
+CleanupUIFont()
+{
+    if (g_hFont)
+    {
+        DeleteObject(g_hFont);
+        g_hFont = nullptr;
+    }
+}
 
 static HWND
 CreateLabel(HWND hParent, HINSTANCE hInst, const wchar_t *text,
@@ -15,6 +62,7 @@ CreateLabel(HWND hParent, HINSTANCE hInst, const wchar_t *text,
     HWND hwnd = CreateWindowEx(0, L"STATIC", text,
         WS_VISIBLE | WS_CHILD | SS_LEFT,
         x, y, w, h, hParent, (HMENU)(INT_PTR)id, hInst, nullptr);
+    ApplyFont(hwnd);
     if (id != 0)
     {
         g_controls[id] = hwnd;
@@ -29,6 +77,7 @@ CreateCheckbox(HWND hParent, HINSTANCE hInst, const wchar_t *text,
     HWND hChk = CreateWindowEx(0, L"BUTTON", text,
         WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX,
         x, y, w, h, hParent, (HMENU)(INT_PTR)id, hInst, nullptr);
+    ApplyFont(hChk);
     if (checked)
     {
         SendMessage(hChk, BM_SETCHECK, BST_CHECKED, 0);
@@ -43,6 +92,7 @@ CreateCombo(HWND hParent, HINSTANCE hInst, int x, int y, int w, int h, int id)
     HWND hCombo = CreateWindowEx(0, L"COMBOBOX", nullptr,
         WS_VISIBLE | WS_CHILD | CBS_DROPDOWNLIST | WS_VSCROLL,
         x, y, w, h, hParent, (HMENU)(INT_PTR)id, hInst, nullptr);
+    ApplyFont(hCombo);
     g_controls[id] = hCombo;
     return hCombo;
 }
@@ -58,6 +108,7 @@ CreateEdit(HWND hParent, HINSTANCE hInst, const wchar_t *text,
     }
     HWND hEdit = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", text, style,
         x, y, w, h, hParent, (HMENU)(INT_PTR)id, hInst, nullptr);
+    ApplyFont(hEdit);
     g_controls[id] = hEdit;
     return hEdit;
 }
@@ -66,9 +117,11 @@ static HWND
 CreateGroupBox(HWND hParent, HINSTANCE hInst, const wchar_t *text,
                int x, int y, int w, int h)
 {
-    return CreateWindowEx(0, L"BUTTON", text,
+    HWND hGroup = CreateWindowEx(0, L"BUTTON", text,
         WS_VISIBLE | WS_CHILD | BS_GROUPBOX,
         x, y, w, h, hParent, nullptr, hInst, nullptr);
+    ApplyFont(hGroup);
+    return hGroup;
 }
 
 static void
@@ -91,24 +144,26 @@ PopulateHotkeyCombo(HWND hCombo, UINT selectedKey)
 void
 CreateControls(HWND hWnd, HINSTANCE hInstance)
 {
-    const int M = 10;  // margin
-    const int W = 380; // content width
+    const int M = 15;  // margin (increased)
+    const int W = 370; // content width
+    const int ROW_H = 28; // row height
+    const int GAP = 8;    // section gap
 
     int y = M;
 
     // ===== Hotkey & Speed Section =====
-    CreateGroupBox(hWnd, hInstance, L"제어", M, y, W, 55);
+    CreateGroupBox(hWnd, hInstance, L"제어", M, y, W, 60);
 
-    CreateLabel(hWnd, hInstance, L"시작", M + 15, y + 22, 40, 20);
-    HWND hStartCombo = CreateCombo(hWnd, hInstance, M + 55, y + 20, 55, 200, IDC_COMBO_START_KEY);
+    CreateLabel(hWnd, hInstance, L"시작", M + 20, y + 26, 35, 20);
+    HWND hStartCombo = CreateCombo(hWnd, hInstance, M + 55, y + 24, 60, 200, IDC_COMBO_START_KEY);
     PopulateHotkeyCombo(hStartCombo, VK_F5);
 
-    CreateLabel(hWnd, hInstance, L"정지", M + 120, y + 22, 40, 20);
-    HWND hStopCombo = CreateCombo(hWnd, hInstance, M + 160, y + 20, 55, 200, IDC_COMBO_STOP_KEY);
+    CreateLabel(hWnd, hInstance, L"정지", M + 130, y + 26, 35, 20);
+    HWND hStopCombo = CreateCombo(hWnd, hInstance, M + 165, y + 24, 60, 200, IDC_COMBO_STOP_KEY);
     PopulateHotkeyCombo(hStopCombo, VK_F6);
 
-    CreateLabel(hWnd, hInstance, L"속도", M + 230, y + 22, 40, 20);
-    HWND hEditCPS = CreateEdit(hWnd, hInstance, L"5", M + 270, y + 20, 40, 20, IDC_EDIT_CPS, true);
+    CreateLabel(hWnd, hInstance, L"속도", M + 245, y + 26, 35, 20);
+    HWND hEditCPS = CreateEdit(hWnd, hInstance, L"5", M + 280, y + 24, 45, 22, IDC_EDIT_CPS, true);
 
     HWND hSpin = CreateWindowEx(0, UPDOWN_CLASS, nullptr,
         WS_VISIBLE | WS_CHILD | UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS,
@@ -118,94 +173,99 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     SendMessage(hSpin, UDM_SETPOS32, 0, 5);
     g_controls[IDC_SPIN_CPS] = hSpin;
 
-    CreateLabel(hWnd, hInstance, L"회/초", M + 320, y + 22, 40, 20);
+    CreateLabel(hWnd, hInstance, L"회/초", M + 330, y + 26, 40, 20);
 
-    y += 65;
+    y += 60 + GAP;
 
     // ===== Mouse Section =====
-    CreateGroupBox(hWnd, hInstance, L"마우스", M, y, W, 50);
+    CreateGroupBox(hWnd, hInstance, L"마우스", M, y, W, 55);
 
-    CreateCheckbox(hWnd, hInstance, L"왼쪽 클릭", M + 20, y + 22, 110, 20, IDC_CHK_LCLICK, true);
-    CreateCheckbox(hWnd, hInstance, L"오른쪽 클릭", M + 150, y + 22, 120, 20, IDC_CHK_RCLICK);
+    CreateCheckbox(hWnd, hInstance, L"왼쪽 클릭", M + 25, y + 25, 120, 22, IDC_CHK_LCLICK, true);
+    CreateCheckbox(hWnd, hInstance, L"오른쪽 클릭", M + 180, y + 25, 130, 22, IDC_CHK_RCLICK);
 
-    y += 60;
+    y += 55 + GAP;
 
     // ===== Keyboard Section =====
-    CreateGroupBox(hWnd, hInstance, L"키보드", M, y, W, 190);
+    CreateGroupBox(hWnd, hInstance, L"키보드", M, y, W, 175);
 
-    int kx = M + 20;
-    int ky = y + 22;
+    int kx = M + 25;
+    int ky = y + 25;
+    int keyWidth = 50;
+    int keyGap = 55;
 
     // Row 1: 1 2 3 4
-    CreateCheckbox(hWnd, hInstance, L"1", kx, ky, 40, 20, IDC_CHK_KEY_1);
-    CreateCheckbox(hWnd, hInstance, L"2", kx + 50, ky, 40, 20, IDC_CHK_KEY_2);
-    CreateCheckbox(hWnd, hInstance, L"3", kx + 100, ky, 40, 20, IDC_CHK_KEY_3);
-    CreateCheckbox(hWnd, hInstance, L"4", kx + 150, ky, 40, 20, IDC_CHK_KEY_4);
+    CreateCheckbox(hWnd, hInstance, L"1", kx, ky, keyWidth, 22, IDC_CHK_KEY_1);
+    CreateCheckbox(hWnd, hInstance, L"2", kx + keyGap, ky, keyWidth, 22, IDC_CHK_KEY_2);
+    CreateCheckbox(hWnd, hInstance, L"3", kx + keyGap * 2, ky, keyWidth, 22, IDC_CHK_KEY_3);
+    CreateCheckbox(hWnd, hInstance, L"4", kx + keyGap * 3, ky, keyWidth, 22, IDC_CHK_KEY_4);
 
     // Row 2: Q W E R T
-    ky += 25;
-    CreateCheckbox(hWnd, hInstance, L"Q", kx, ky, 40, 20, IDC_CHK_KEY_Q);
-    CreateCheckbox(hWnd, hInstance, L"W", kx + 50, ky, 40, 20, IDC_CHK_KEY_W);
-    CreateCheckbox(hWnd, hInstance, L"E", kx + 100, ky, 40, 20, IDC_CHK_KEY_E);
-    CreateCheckbox(hWnd, hInstance, L"R", kx + 150, ky, 40, 20, IDC_CHK_KEY_R);
-    CreateCheckbox(hWnd, hInstance, L"T", kx + 200, ky, 40, 20, IDC_CHK_KEY_T);
+    ky += ROW_H;
+    CreateCheckbox(hWnd, hInstance, L"Q", kx, ky, keyWidth, 22, IDC_CHK_KEY_Q);
+    CreateCheckbox(hWnd, hInstance, L"W", kx + keyGap, ky, keyWidth, 22, IDC_CHK_KEY_W);
+    CreateCheckbox(hWnd, hInstance, L"E", kx + keyGap * 2, ky, keyWidth, 22, IDC_CHK_KEY_E);
+    CreateCheckbox(hWnd, hInstance, L"R", kx + keyGap * 3, ky, keyWidth, 22, IDC_CHK_KEY_R);
+    CreateCheckbox(hWnd, hInstance, L"T", kx + keyGap * 4, ky, keyWidth, 22, IDC_CHK_KEY_T);
 
     // Row 3: Enter Space ESC
-    ky += 25;
-    CreateCheckbox(hWnd, hInstance, L"Enter", kx, ky, 70, 20, IDC_CHK_KEY_ENTER);
-    CreateCheckbox(hWnd, hInstance, L"Space", kx + 80, ky, 70, 20, IDC_CHK_KEY_SPACE);
-    CreateCheckbox(hWnd, hInstance, L"ESC", kx + 160, ky, 60, 20, IDC_CHK_KEY_ESC);
+    ky += ROW_H;
+    CreateCheckbox(hWnd, hInstance, L"Enter", kx, ky, 70, 22, IDC_CHK_KEY_ENTER);
+    CreateCheckbox(hWnd, hInstance, L"Space", kx + 85, ky, 75, 22, IDC_CHK_KEY_SPACE);
+    CreateCheckbox(hWnd, hInstance, L"ESC", kx + 175, ky, 60, 22, IDC_CHK_KEY_ESC);
 
     // Row 4: Arrow keys
-    ky += 25;
-    CreateCheckbox(hWnd, hInstance, L"Up", kx, ky, 55, 20, IDC_CHK_KEY_UP);
-    CreateCheckbox(hWnd, hInstance, L"Down", kx + 65, ky, 65, 20, IDC_CHK_KEY_DOWN);
-    CreateCheckbox(hWnd, hInstance, L"Left", kx + 140, ky, 60, 20, IDC_CHK_KEY_LEFT);
-    CreateCheckbox(hWnd, hInstance, L"Right", kx + 210, ky, 65, 20, IDC_CHK_KEY_RIGHT);
+    ky += ROW_H;
+    CreateCheckbox(hWnd, hInstance, L"↑", kx, ky, 45, 22, IDC_CHK_KEY_UP);
+    CreateCheckbox(hWnd, hInstance, L"↓", kx + 55, ky, 45, 22, IDC_CHK_KEY_DOWN);
+    CreateCheckbox(hWnd, hInstance, L"←", kx + 110, ky, 45, 22, IDC_CHK_KEY_LEFT);
+    CreateCheckbox(hWnd, hInstance, L"→", kx + 165, ky, 45, 22, IDC_CHK_KEY_RIGHT);
 
-    // Row 4: Custom keys (4 slots, no checkboxes - enabled if has value)
-    ky += 25;
-    CreateLabel(hWnd, hInstance, L"사용자 정의:", kx, ky + 2, 100, 20);
-    CreateEdit(hWnd, hInstance, L"", kx + 105, ky, 28, 20, IDC_EDIT_CUSTOM_1);
-    CreateEdit(hWnd, hInstance, L"", kx + 140, ky, 28, 20, IDC_EDIT_CUSTOM_2);
-    CreateEdit(hWnd, hInstance, L"", kx + 175, ky, 28, 20, IDC_EDIT_CUSTOM_3);
-    CreateEdit(hWnd, hInstance, L"", kx + 210, ky, 28, 20, IDC_EDIT_CUSTOM_4);
+    // Row 5: Custom keys
+    ky += ROW_H;
+    CreateLabel(hWnd, hInstance, L"사용자 정의:", kx, ky + 2, 95, 20);
+    CreateEdit(hWnd, hInstance, L"", kx + 100, ky, 32, 22, IDC_EDIT_CUSTOM_1);
+    CreateEdit(hWnd, hInstance, L"", kx + 140, ky, 32, 22, IDC_EDIT_CUSTOM_2);
+    CreateEdit(hWnd, hInstance, L"", kx + 180, ky, 32, 22, IDC_EDIT_CUSTOM_3);
+    CreateEdit(hWnd, hInstance, L"", kx + 220, ky, 32, 22, IDC_EDIT_CUSTOM_4);
 
     SendMessage(GetControlHandle(IDC_EDIT_CUSTOM_1), EM_SETLIMITTEXT, 1, 0);
     SendMessage(GetControlHandle(IDC_EDIT_CUSTOM_2), EM_SETLIMITTEXT, 1, 0);
     SendMessage(GetControlHandle(IDC_EDIT_CUSTOM_3), EM_SETLIMITTEXT, 1, 0);
     SendMessage(GetControlHandle(IDC_EDIT_CUSTOM_4), EM_SETLIMITTEXT, 1, 0);
 
-    y += 200;
+    y += 175 + GAP;
 
     // ===== Options Section =====
-    CreateGroupBox(hWnd, hInstance, L"옵션", M, y, W, 80);
+    CreateGroupBox(hWnd, hInstance, L"옵션", M, y, W, 85);
 
-    // Row 1: Rotation
-    CreateCheckbox(hWnd, hInstance, L"순환", M + 20, y + 22, 55, 20, IDC_CHK_ROTATION);
-    CreateEdit(hWnd, hInstance, L"1234", M + 75, y + 20, 60, 20, IDC_EDIT_ROTATION_KEYS, false);
+    // Row 1: Rotation, Random, Timer
+    CreateCheckbox(hWnd, hInstance, L"순환", M + 20, y + 25, 55, 22, IDC_CHK_ROTATION);
+    CreateEdit(hWnd, hInstance, L"1234", M + 75, y + 24, 65, 22, IDC_EDIT_ROTATION_KEYS, false);
 
-    CreateCheckbox(hWnd, hInstance, L"랜덤 ±", M + 150, y + 22, 70, 20, IDC_CHK_RANDOM);
-    CreateEdit(hWnd, hInstance, L"20", M + 220, y + 20, 30, 20, IDC_EDIT_RANDOM_PCT, true);
-    CreateLabel(hWnd, hInstance, L"%", M + 252, y + 22, 20, 20);
+    CreateCheckbox(hWnd, hInstance, L"랜덤 ±", M + 155, y + 25, 75, 22, IDC_CHK_RANDOM);
+    CreateEdit(hWnd, hInstance, L"20", M + 230, y + 24, 35, 22, IDC_EDIT_RANDOM_PCT, true);
+    CreateLabel(hWnd, hInstance, L"%", M + 267, y + 26, 20, 20);
 
-    CreateCheckbox(hWnd, hInstance, L"타이머", M + 280, y + 22, 65, 20, IDC_CHK_TIMER);
-    CreateEdit(hWnd, hInstance, L"60", M + 345, y + 20, 30, 20, IDC_EDIT_TIMER_SEC, true);
+    CreateCheckbox(hWnd, hInstance, L"타이머", M + 295, y + 25, 70, 22, IDC_CHK_TIMER);
 
-    // Row 2: Hint
-    CreateLabel(hWnd, hInstance, L"(순환: 지정키만 순환, 나머지는 매번 실행)",
-        M + 20, y + 47, 350, 20);
+    // Row 2: Timer value and hint
+    CreateEdit(hWnd, hInstance, L"60", M + 295, y + 52, 40, 22, IDC_EDIT_TIMER_SEC, true);
+    CreateLabel(hWnd, hInstance, L"초", M + 338, y + 54, 25, 20);
 
-    y += 90;
+    CreateLabel(hWnd, hInstance, L"순환: 지정키만 순환, 나머지 매번 실행",
+        M + 20, y + 54, 260, 20);
+
+    y += 85 + GAP;
 
     // ===== Bottom: Status & Exit =====
     HWND hStatus = CreateLabel(hWnd, hInstance, L"준비 (F5: 시작, F6: 정지)",
-        M, y + 5, 250, 20, IDC_STATIC_STATUS);
+        M, y + 5, 260, 22, IDC_STATIC_STATUS);
     g_controls[IDC_STATIC_STATUS] = hStatus;
 
-    CreateWindowEx(0, L"BUTTON", L"종료",
+    HWND hExitBtn = CreateWindowEx(0, L"BUTTON", L"종료",
         WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
-        M + W - 70, y, 70, 28, hWnd, (HMENU)IDC_BTN_EXIT, hInstance, nullptr);
+        M + W - 80, y, 80, 30, hWnd, (HMENU)IDC_BTN_EXIT, hInstance, nullptr);
+    ApplyFont(hExitBtn);
 }
 
 HWND

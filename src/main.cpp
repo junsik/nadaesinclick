@@ -54,6 +54,9 @@ wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
     // Initialize clicker module
     InitClicker();
 
+    // Initialize modern UI font
+    InitUIFont();
+
     // Register window class
     WNDCLASSEX wc = {};
     wc.cbSize = sizeof(WNDCLASSEX);
@@ -212,6 +215,9 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
             // Cleanup clicker resources
             CleanupClicker();
+
+            // Cleanup UI font
+            CleanupUIFont();
 
             // Unregister hotkeys
             UnregisterAppHotkeys(hWnd);
