@@ -131,7 +131,7 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     y += 60;
 
     // ===== Keyboard Section =====
-    CreateGroupBox(hWnd, hInstance, L"키보드", M, y, W, 165);
+    CreateGroupBox(hWnd, hInstance, L"키보드", M, y, W, 190);
 
     int kx = M + 20;
     int ky = y + 22;
@@ -142,13 +142,21 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     CreateCheckbox(hWnd, hInstance, L"3", kx + 100, ky, 40, 20, IDC_CHK_KEY_3);
     CreateCheckbox(hWnd, hInstance, L"4", kx + 150, ky, 40, 20, IDC_CHK_KEY_4);
 
-    // Row 2: Enter Space ESC
+    // Row 2: Q W E R T
+    ky += 25;
+    CreateCheckbox(hWnd, hInstance, L"Q", kx, ky, 40, 20, IDC_CHK_KEY_Q);
+    CreateCheckbox(hWnd, hInstance, L"W", kx + 50, ky, 40, 20, IDC_CHK_KEY_W);
+    CreateCheckbox(hWnd, hInstance, L"E", kx + 100, ky, 40, 20, IDC_CHK_KEY_E);
+    CreateCheckbox(hWnd, hInstance, L"R", kx + 150, ky, 40, 20, IDC_CHK_KEY_R);
+    CreateCheckbox(hWnd, hInstance, L"T", kx + 200, ky, 40, 20, IDC_CHK_KEY_T);
+
+    // Row 3: Enter Space ESC
     ky += 25;
     CreateCheckbox(hWnd, hInstance, L"Enter", kx, ky, 70, 20, IDC_CHK_KEY_ENTER);
     CreateCheckbox(hWnd, hInstance, L"Space", kx + 80, ky, 70, 20, IDC_CHK_KEY_SPACE);
     CreateCheckbox(hWnd, hInstance, L"ESC", kx + 160, ky, 60, 20, IDC_CHK_KEY_ESC);
 
-    // Row 3: Arrow keys
+    // Row 4: Arrow keys
     ky += 25;
     CreateCheckbox(hWnd, hInstance, L"Up", kx, ky, 55, 20, IDC_CHK_KEY_UP);
     CreateCheckbox(hWnd, hInstance, L"Down", kx + 65, ky, 65, 20, IDC_CHK_KEY_DOWN);
@@ -168,7 +176,27 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     SendMessage(GetControlHandle(IDC_EDIT_CUSTOM_3), EM_SETLIMITTEXT, 1, 0);
     SendMessage(GetControlHandle(IDC_EDIT_CUSTOM_4), EM_SETLIMITTEXT, 1, 0);
 
-    y += 175;
+    y += 200;
+
+    // ===== Options Section =====
+    CreateGroupBox(hWnd, hInstance, L"옵션", M, y, W, 80);
+
+    // Row 1: Rotation
+    CreateCheckbox(hWnd, hInstance, L"순환", M + 20, y + 22, 55, 20, IDC_CHK_ROTATION);
+    CreateEdit(hWnd, hInstance, L"1234", M + 75, y + 20, 60, 20, IDC_EDIT_ROTATION_KEYS, false);
+
+    CreateCheckbox(hWnd, hInstance, L"랜덤 ±", M + 150, y + 22, 70, 20, IDC_CHK_RANDOM);
+    CreateEdit(hWnd, hInstance, L"20", M + 220, y + 20, 30, 20, IDC_EDIT_RANDOM_PCT, true);
+    CreateLabel(hWnd, hInstance, L"%", M + 252, y + 22, 20, 20);
+
+    CreateCheckbox(hWnd, hInstance, L"타이머", M + 280, y + 22, 65, 20, IDC_CHK_TIMER);
+    CreateEdit(hWnd, hInstance, L"60", M + 345, y + 20, 30, 20, IDC_EDIT_TIMER_SEC, true);
+
+    // Row 2: Hint
+    CreateLabel(hWnd, hInstance, L"(순환: 지정키만 순환, 나머지는 매번 실행)",
+        M + 20, y + 47, 350, 20);
+
+    y += 90;
 
     // ===== Bottom: Status & Exit =====
     HWND hStatus = CreateLabel(hWnd, hInstance, L"준비 (F5: 시작, F6: 정지)",
@@ -215,6 +243,16 @@ ReadSettingsFromUI(ClickerConfig *config)
         config->keyFlags |= KEY_3;
     if (SendMessage(GetControlHandle(IDC_CHK_KEY_4), BM_GETCHECK, 0, 0) == BST_CHECKED)
         config->keyFlags |= KEY_4;
+    if (SendMessage(GetControlHandle(IDC_CHK_KEY_Q), BM_GETCHECK, 0, 0) == BST_CHECKED)
+        config->keyFlags |= KEY_Q;
+    if (SendMessage(GetControlHandle(IDC_CHK_KEY_W), BM_GETCHECK, 0, 0) == BST_CHECKED)
+        config->keyFlags |= KEY_W;
+    if (SendMessage(GetControlHandle(IDC_CHK_KEY_E), BM_GETCHECK, 0, 0) == BST_CHECKED)
+        config->keyFlags |= KEY_E;
+    if (SendMessage(GetControlHandle(IDC_CHK_KEY_R), BM_GETCHECK, 0, 0) == BST_CHECKED)
+        config->keyFlags |= KEY_R;
+    if (SendMessage(GetControlHandle(IDC_CHK_KEY_T), BM_GETCHECK, 0, 0) == BST_CHECKED)
+        config->keyFlags |= KEY_T;
     if (SendMessage(GetControlHandle(IDC_CHK_KEY_ENTER), BM_GETCHECK, 0, 0) == BST_CHECKED)
         config->keyFlags |= KEY_ENTER;
     if (SendMessage(GetControlHandle(IDC_CHK_KEY_SPACE), BM_GETCHECK, 0, 0) == BST_CHECKED)
@@ -268,6 +306,48 @@ ReadSettingsFromUI(ClickerConfig *config)
     {
         config->clicksPerSecond = 100;
     }
+
+    // Options
+    config->rotationMode = (SendMessage(GetControlHandle(IDC_CHK_ROTATION),
+        BM_GETCHECK, 0, 0) == BST_CHECKED);
+
+    // Parse rotation keys
+    GetWindowText(GetControlHandle(IDC_EDIT_ROTATION_KEYS), config->rotationKeys, 16);
+    config->rotationKeyCount = 0;
+    for (int i = 0; config->rotationKeys[i] != L'\0' && i < 15; i++)
+    {
+        wchar_t ch = config->rotationKeys[i];
+        if (ch >= L'0' && ch <= L'9')
+        {
+            config->rotationVkCodes[config->rotationKeyCount++] = 0x30 + (ch - L'0');
+        }
+        else if (ch >= L'A' && ch <= L'Z')
+        {
+            config->rotationVkCodes[config->rotationKeyCount++] = 0x41 + (ch - L'A');
+        }
+        else if (ch >= L'a' && ch <= L'z')
+        {
+            config->rotationVkCodes[config->rotationKeyCount++] = 0x41 + (ch - L'a');
+        }
+    }
+
+    config->randomDelay = (SendMessage(GetControlHandle(IDC_CHK_RANDOM),
+        BM_GETCHECK, 0, 0) == BST_CHECKED);
+    GetWindowText(GetControlHandle(IDC_EDIT_RANDOM_PCT), buf, 32);
+    config->randomPercent = _wtoi(buf);
+    if (config->randomPercent < 1)
+        config->randomPercent = 1;
+    if (config->randomPercent > 50)
+        config->randomPercent = 50;
+
+    config->useTimer = (SendMessage(GetControlHandle(IDC_CHK_TIMER),
+        BM_GETCHECK, 0, 0) == BST_CHECKED);
+    GetWindowText(GetControlHandle(IDC_EDIT_TIMER_SEC), buf, 32);
+    config->timerSeconds = _wtoi(buf);
+    if (config->timerSeconds < 1)
+        config->timerSeconds = 1;
+    if (config->timerSeconds > 3600)
+        config->timerSeconds = 3600;
 }
 
 void

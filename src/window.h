@@ -5,7 +5,7 @@
 
 // Window dimensions
 #define WINDOW_WIDTH    420
-#define WINDOW_HEIGHT   390
+#define WINDOW_HEIGHT   505
 
 // Initialize and create the main window
 HWND CreateMainWindow(HINSTANCE hInstance);

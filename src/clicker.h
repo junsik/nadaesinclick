@@ -11,12 +11,15 @@
 #define KEY_ENTER   0x0010
 #define KEY_SPACE   0x0020
 #define KEY_ESC     0x0040
-#define KEY_A       0x0080
-#define KEY_Q       0x0100
-#define KEY_UP      0x0200
-#define KEY_DOWN    0x0400
-#define KEY_LEFT    0x0800
-#define KEY_RIGHT   0x1000
+#define KEY_Q       0x0080
+#define KEY_W       0x0100
+#define KEY_E       0x0200
+#define KEY_R       0x0400
+#define KEY_T       0x0800
+#define KEY_UP      0x1000
+#define KEY_DOWN    0x2000
+#define KEY_LEFT    0x4000
+#define KEY_RIGHT   0x8000
 
 #define MAX_CUSTOM_KEYS 4
 
@@ -44,6 +47,20 @@ struct ClickerConfig
 
     // Speed
     int clicksPerSecond;
+
+    // Skill Rotation Mode (press keys in sequence instead of all at once)
+    bool rotationMode;
+    wchar_t rotationKeys[16];  // Keys to rotate (e.g., "1234" or "QWER")
+    int rotationKeyCount;
+    WORD rotationVkCodes[16];  // Parsed VK codes for rotation
+
+    // Random Delay (add randomness to timing)
+    bool randomDelay;
+    int randomPercent;  // ±percentage (e.g., 20 = ±20%)
+
+    // Timer (auto-stop after duration)
+    bool useTimer;
+    int timerSeconds;
 };
 
 // Initialize clicker module

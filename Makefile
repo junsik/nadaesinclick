@@ -33,4 +33,17 @@ $(OBJDIR)/resource.o: $(RESDIR)/resource.rc $(RESDIR)/icon.ico
 clean:
 	rm -rf $(OBJDIR) $(TARGET)
 
-.PHONY: all clean
+# CMake build (MSVC)123ㅂ
+cmake-configure:
+	cmake -B build -G "Visual Studio 17 2022" -A x64
+
+cmake-build:
+	cmake --build build --con123ㅂfig Release
+
+cmake-clean:
+	rm -rf build
+
+cmake: cmake-configure cmake-build
+
+.PHONY: all clean cmake cmake-configure cmake-build cmake-clean
+1ㅂ123

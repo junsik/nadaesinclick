@@ -142,6 +142,16 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         }
 
+    case WM_USER + 100:  // Timer expired
+        {
+            if (IsClickerRunning())
+            {
+                StopClicking(hWnd);
+                UpdateStatusDisplay(hWnd, false);
+            }
+            return 0;
+        }
+
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
