@@ -1,8 +1,35 @@
 cmake_minimum_required(VERSION 3.15)
-project(na-daesin-click VERSION 1.0 LANGUAGES CXX)
+project(na-daesin-click VERSION 1.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Git version info
+find_package(Git QUIET)
+if(GIT_FOUND)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_COMMIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=0
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_TAG
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+else()
+    set(GIT_COMMIT_HASH "unknown")
+    set(GIT_TAG "v${PROJECT_VERSION}")
+endif()
+
+# Version definitions
+add_definitions(-DAPP_VERSION="${GIT_TAG}")
+add_definitions(-DAPP_COMMIT="${GIT_COMMIT_HASH}")
+add_definitions(-DAPP_AUTHOR="junsik")
 
 # Unicode support
 add_definitions(-DUNICODE -D_UNICODE)

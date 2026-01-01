@@ -257,10 +257,15 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
 
     y += 85 + GAP;
 
-    // ===== Bottom: Status & Exit =====
+    // ===== Bottom: Status & Buttons =====
     HWND hStatus = CreateLabel(hWnd, hInstance, L"준비 (F5: 시작, F6: 정지)",
-        M, y + 5, 260, 22, IDC_STATIC_STATUS);
+        M, y + 5, 200, 22, IDC_STATIC_STATUS);
     g_controls[IDC_STATIC_STATUS] = hStatus;
+
+    HWND hAboutBtn = CreateWindowEx(0, L"BUTTON", L"정보",
+        WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+        M + W - 170, y, 80, 30, hWnd, (HMENU)IDC_BTN_ABOUT, hInstance, nullptr);
+    ApplyFont(hAboutBtn);
 
     HWND hExitBtn = CreateWindowEx(0, L"BUTTON", L"종료",
         WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,

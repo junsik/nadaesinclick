@@ -50,6 +50,7 @@
 
 // Buttons
 #define IDC_BTN_EXIT 1040
+#define IDC_BTN_ABOUT 1041
 
 // Static Labels
 #define IDC_STATIC_STATUS 1050

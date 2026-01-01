@@ -3,6 +3,7 @@
 #include "resource.h"
 #include "window.h"
 #include <commctrl.h>
+#include <stdio.h>
 #include <windows.h>
 
 #ifdef _MSC_VER
@@ -164,6 +165,20 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             {
             case IDC_BTN_EXIT:
                 DestroyWindow(hWnd);
+                break;
+
+            case IDC_BTN_ABOUT:
+                {
+                    wchar_t aboutMsg[512];
+                    swprintf(aboutMsg, 512,
+                        L"나대신클릭 %S\n\n"
+                        L"마우스 클릭과 키보드 입력을 자동으로 반복합니다.\n\n"
+                        L"제작: %S\n"
+                        L"커밋: %S\n\n"
+                        L"https://github.com/junsik/nadaesinclick",
+                        APP_VERSION, APP_AUTHOR, APP_COMMIT);
+                    MessageBox(hWnd, aboutMsg, L"정보", MB_OK | MB_ICONINFORMATION);
+                }
                 break;
 
             case IDC_COMBO_START_KEY:
