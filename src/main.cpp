@@ -156,6 +156,9 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     g_animFrame = 0;
                     SetTimer(hWnd, TIMER_ID_ANIMATION, 80, nullptr);
                     UpdateStatusDisplay(hWnd, true);
+
+                    HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
+                    if (hModeCombo) EnableWindow(hModeCombo, FALSE);
                 }
             }
             else if (wParam == HOTKEY_ID_STOP)
@@ -165,6 +168,9 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     KillTimer(hWnd, TIMER_ID_ANIMATION);
                     StopClicking(hWnd);
                     UpdateStatusDisplay(hWnd, false);
+
+                    HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
+                    if (hModeCombo) EnableWindow(hModeCombo, TRUE);
                 }
             }
             return 0;
@@ -193,6 +199,9 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 KillTimer(hWnd, TIMER_ID_ANIMATION);
                 StopClicking(hWnd);
                 UpdateStatusDisplay(hWnd, false);
+
+                HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
+                if (hModeCombo) EnableWindow(hModeCombo, TRUE);
             }
             return 0;
         }
@@ -250,7 +259,36 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                     g_config.startKey = GetVKFromComboIndex(startIdx);
                     g_config.stopKey = GetVKFromComboIndex(stopIdx);
-                    UpdateHotkeys(hWnd, g_config.startKey, g_config.stopKey);
+
+                    // Only register hotkeys in auto-repeat mode
+                    if (g_config.clickMode == MODE_AUTO_REPEAT)
+                    {
+                        UpdateHotkeys(hWnd, g_config.startKey, g_config.stopKey);
+                    }
+                    UpdateStatusDisplay(hWnd, false);
+                }
+                break;
+
+            case IDC_COMBO_MODE:
+                if (wmEvent == CBN_SELCHANGE)
+                {
+                    HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
+                    int modeIdx = (int)SendMessage(hModeCombo, CB_GETCURSEL, 0, 0);
+                    bool holdMode = (modeIdx == 1);
+
+                    g_config.clickMode = holdMode ? MODE_HOLD : MODE_AUTO_REPEAT;
+
+                    // Toggle hotkey registration
+                    if (holdMode)
+                    {
+                        UnregisterAppHotkeys(hWnd);
+                    }
+                    else
+                    {
+                        RegisterAppHotkeys(hWnd, g_config.startKey, g_config.stopKey);
+                    }
+
+                    UpdateModeUI(holdMode);
                     UpdateStatusDisplay(hWnd, false);
                 }
                 break;

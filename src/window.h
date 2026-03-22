@@ -29,4 +29,7 @@ void ReadSettingsFromUI(ClickerConfig *config);
 // Update status display
 void UpdateStatusDisplay(HWND hWnd, bool isRunning);
 
+// Update UI enable/disable state based on click mode
+void UpdateModeUI(bool holdMode);
+
 #endif // WINDOW_H

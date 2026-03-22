@@ -468,3 +468,32 @@ UpdateStatusDisplay(HWND hWnd, bool isRunning)
     }
 }
 
+void
+UpdateModeUI(bool holdMode)
+{
+    // Stop key combo: disable in hold mode
+    HWND hStopCombo = GetControlHandle(IDC_COMBO_STOP_KEY);
+    if (hStopCombo)
+    {
+        EnableWindow(hStopCombo, !holdMode);
+    }
+
+    // Timer: disable in hold mode
+    HWND hTimerChk = GetControlHandle(IDC_CHK_TIMER);
+    HWND hTimerEdit = GetControlHandle(IDC_EDIT_TIMER_SEC);
+    if (hTimerChk)
+    {
+        EnableWindow(hTimerChk, !holdMode);
+    }
+    if (hTimerEdit)
+    {
+        EnableWindow(hTimerEdit, !holdMode);
+    }
+
+    // Uncheck timer if switching to hold mode
+    if (holdMode && hTimerChk)
+    {
+        SendMessage(hTimerChk, BM_SETCHECK, BST_UNCHECKED, 0);
+    }
+}
+
