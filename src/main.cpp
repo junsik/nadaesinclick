@@ -53,7 +53,8 @@ HoldModeKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
         KBDLLHOOKSTRUCT *kb = (KBDLLHOOKSTRUCT *)lParam;
         WORD vk = (WORD)kb->vkCode;
 
-        if (IsConfiguredKey(&g_config, vk))
+        // Only suppress physical key events, let our synthetic (injected) events through
+        if (!(kb->flags & LLKHF_INJECTED) && IsConfiguredKey(&g_config, vk))
         {
             if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
             {
