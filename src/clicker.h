@@ -23,6 +23,13 @@
 
 #define MAX_CUSTOM_KEYS 4
 
+// Click mode
+enum ClickMode
+{
+    MODE_AUTO_REPEAT = 0,
+    MODE_HOLD = 1
+};
+
 struct CustomKey
 {
     bool enabled;
@@ -31,6 +38,9 @@ struct CustomKey
 
 struct ClickerConfig
 {
+    // Mode
+    ClickMode clickMode;
+
     // Hotkeys
     UINT startKey;
     UINT stopKey;

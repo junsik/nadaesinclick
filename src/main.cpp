@@ -17,6 +17,26 @@
 HINSTANCE g_hInstance = nullptr;
 HWND g_hMainWnd = nullptr;
 ClickerConfig g_config = {};
+static int g_animFrame = 0;
+
+// Animation frames (wave pattern)
+static const wchar_t* g_animFrames[] = {
+    L"▁▂▃▄▅▆▇█",
+    L"▂▃▄▅▆▇█▇",
+    L"▃▄▅▆▇█▇▆",
+    L"▄▅▆▇█▇▆▅",
+    L"▅▆▇█▇▆▅▄",
+    L"▆▇█▇▆▅▄▃",
+    L"▇█▇▆▅▄▃▂",
+    L"█▇▆▅▄▃▂▁",
+    L"▇▆▅▄▃▂▁▂",
+    L"▆▅▄▃▂▁▂▃",
+    L"▅▄▃▂▁▂▃▄",
+    L"▄▃▂▁▂▃▄▅",
+    L"▃▂▁▂▃▄▅▆",
+    L"▂▁▂▃▄▅▆▇"
+};
+static const int g_animFrameCount = 14;
 
 // Window procedure forward declaration
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -25,6 +45,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 void
 InitDefaultConfig()
 {
+    g_config.clickMode = MODE_AUTO_REPEAT;
     g_config.startKey = VK_F5;
     g_config.stopKey = VK_F6;
     g_config.leftClick = true;
@@ -132,6 +153,8 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 {
                     ReadSettingsFromUI(&g_config);
                     StartClicking(hWnd, &g_config);
+                    g_animFrame = 0;
+                    SetTimer(hWnd, TIMER_ID_ANIMATION, 80, nullptr);
                     UpdateStatusDisplay(hWnd, true);
                 }
             }
@@ -139,8 +162,25 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             {
                 if (IsClickerRunning())
                 {
+                    KillTimer(hWnd, TIMER_ID_ANIMATION);
                     StopClicking(hWnd);
                     UpdateStatusDisplay(hWnd, false);
+                }
+            }
+            return 0;
+        }
+
+    case WM_TIMER:
+        {
+            if (wParam == TIMER_ID_ANIMATION)
+            {
+                HWND hStatus = GetControlHandle(IDC_STATIC_STATUS);
+                if (hStatus)
+                {
+                    wchar_t status[64];
+                    swprintf(status, 64, L"실행 중  %s", g_animFrames[g_animFrame]);
+                    SetWindowText(hStatus, status);
+                    g_animFrame = (g_animFrame + 1) % g_animFrameCount;
                 }
             }
             return 0;
@@ -150,6 +190,7 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
             if (IsClickerRunning())
             {
+                KillTimer(hWnd, TIMER_ID_ANIMATION);
                 StopClicking(hWnd);
                 UpdateStatusDisplay(hWnd, false);
             }
@@ -225,6 +266,9 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_DESTROY:
         {
+            // Stop animation timer
+            KillTimer(hWnd, TIMER_ID_ANIMATION);
+
             // Stop clicking if running
             StopClicking(hWnd);
 
