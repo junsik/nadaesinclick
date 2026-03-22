@@ -92,6 +92,13 @@ void StopClicking(HWND hWnd);
 // Check if clicker is running
 bool IsClickerRunning();
 
+// Hold mode key state tracking (set by keyboard hook, read by worker thread)
+void SetHoldKeyState(WORD vkCode, bool held);
+bool IsHoldKeyHeld(WORD vkCode);
+
+// Check if a VK code is configured as an active key in the config
+bool IsConfiguredKey(const ClickerConfig *config, WORD vkCode);
+
 // Clean up resources
 void CleanupClicker();
 

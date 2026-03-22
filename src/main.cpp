@@ -19,6 +19,7 @@ HINSTANCE g_hInstance = nullptr;
 HWND g_hMainWnd = nullptr;
 ClickerConfig g_config = {};
 static int g_animFrame = 0;
+static HHOOK g_hKeyboardHook = nullptr;
 
 // Animation frames (wave pattern)
 static const wchar_t* g_animFrames[] = {
@@ -41,6 +42,33 @@ static const int g_animFrameCount = 14;
 
 // Window procedure forward declaration
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+// Low-level keyboard hook: suppress configured keys in hold mode
+// and track their physical state for the worker thread
+LRESULT CALLBACK
+HoldModeKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    if (nCode == HC_ACTION && g_config.clickMode == MODE_HOLD && IsClickerRunning())
+    {
+        KBDLLHOOKSTRUCT *kb = (KBDLLHOOKSTRUCT *)lParam;
+        WORD vk = (WORD)kb->vkCode;
+
+        if (IsConfiguredKey(&g_config, vk))
+        {
+            if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
+            {
+                SetHoldKeyState(vk, true);
+            }
+            else if (wParam == WM_KEYUP || wParam == WM_SYSKEYUP)
+            {
+                SetHoldKeyState(vk, false);
+            }
+            // Suppress the physical key event so the game doesn't see it
+            return 1;
+        }
+    }
+    return CallNextHookEx(g_hKeyboardHook, nCode, wParam, lParam);
+}
 
 // Initialize default configuration
 void
@@ -147,6 +175,10 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
             // Register hotkeys
             RegisterAppHotkeys(hWnd, g_config.startKey, g_config.stopKey);
+
+            // Install keyboard hook for hold mode
+            g_hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, HoldModeKeyboardProc,
+                g_hInstance, 0);
 
             // Update status display with current hotkey names
             UpdateStatusDisplay(hWnd, false);
@@ -312,6 +344,13 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
             // Unregister hotkeys
             UnregisterAppHotkeys(hWnd);
+
+            // Remove keyboard hook
+            if (g_hKeyboardHook)
+            {
+                UnhookWindowsHookEx(g_hKeyboardHook);
+                g_hKeyboardHook = nullptr;
+            }
 
             PostQuitMessage(0);
             return 0;

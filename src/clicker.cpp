@@ -111,6 +111,26 @@ GetActiveKeys(const ClickerConfig *config, WORD *keys, int *count)
     }
 }
 
+bool
+IsConfiguredKey(const ClickerConfig *config, WORD vkCode)
+{
+    for (int i = 0; i < g_numKeyMappings; i++)
+    {
+        if ((config->keyFlags & g_keyMappings[i].flag) && g_keyMappings[i].vkCode == vkCode)
+        {
+            return true;
+        }
+    }
+    for (int i = 0; i < MAX_CUSTOM_KEYS; i++)
+    {
+        if (config->customKeys[i].enabled && config->customKeys[i].vkCode == vkCode)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 static bool
 IsRotationKey(const ClickerConfig *config, WORD vkCode)
 {
@@ -124,11 +144,32 @@ IsRotationKey(const ClickerConfig *config, WORD vkCode)
     return false;
 }
 
-// Check if a key is physically held down
+// Hold mode key state tracking (updated by keyboard hook in main.cpp)
+static volatile bool g_holdKeyState[256] = {};
+
+void
+SetHoldKeyState(WORD vkCode, bool held)
+{
+    if (vkCode < 256)
+    {
+        g_holdKeyState[vkCode] = held;
+    }
+}
+
+bool
+IsHoldKeyHeld(WORD vkCode)
+{
+    if (vkCode < 256)
+    {
+        return g_holdKeyState[vkCode];
+    }
+    return false;
+}
+
 static bool
 IsKeyHeld(WORD vkCode)
 {
-    return (GetAsyncKeyState(vkCode) & 0x8000) != 0;
+    return IsHoldKeyHeld(vkCode);
 }
 
 // Send a key only if hold mode condition is met
