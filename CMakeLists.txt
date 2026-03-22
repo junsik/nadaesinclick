@@ -40,6 +40,7 @@ set(SOURCES
     src/window.cpp
     src/clicker.cpp
     src/hotkey.cpp
+    src/config.cpp
 )
 
 # Header files
@@ -47,6 +48,7 @@ set(HEADERS
     src/window.h
     src/clicker.h
     src/hotkey.h
+    src/config.h
     res/resource.h
 )
 

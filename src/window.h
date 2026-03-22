@@ -5,7 +5,7 @@
 
 // Window dimensions
 #define WINDOW_WIDTH    415
-#define WINDOW_HEIGHT   500
+#define WINDOW_HEIGHT   553
 
 // Initialize modern UI font (Segoe UI)
 void InitUIFont();
@@ -25,6 +25,9 @@ HWND GetControlHandle(int controlId);
 // Read settings from UI
 struct ClickerConfig;
 void ReadSettingsFromUI(ClickerConfig *config);
+
+// Apply config values to UI controls
+void ApplyConfigToUI(const ClickerConfig *config);
 
 // Update status display
 void UpdateStatusDisplay(HWND hWnd, bool isRunning);

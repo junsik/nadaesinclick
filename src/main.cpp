@@ -1,4 +1,5 @@
 #include "clicker.h"
+#include "config.h"
 #include "hotkey.h"
 #include "resource.h"
 #include "window.h"
@@ -17,6 +18,26 @@
 HINSTANCE g_hInstance = nullptr;
 HWND g_hMainWnd = nullptr;
 ClickerConfig g_config = {};
+static int g_animFrame = 0;
+
+// Animation frames (wave pattern)
+static const wchar_t* g_animFrames[] = {
+    L"▁▂▃▄▅▆▇█",
+    L"▂▃▄▅▆▇█▇",
+    L"▃▄▅▆▇█▇▆",
+    L"▄▅▆▇█▇▆▅",
+    L"▅▆▇█▇▆▅▄",
+    L"▆▇█▇▆▅▄▃",
+    L"▇█▇▆▅▄▃▂",
+    L"█▇▆▅▄▃▂▁",
+    L"▇▆▅▄▃▂▁▂",
+    L"▆▅▄▃▂▁▂▃",
+    L"▅▄▃▂▁▂▃▄",
+    L"▄▃▂▁▂▃▄▅",
+    L"▃▂▁▂▃▄▅▆",
+    L"▂▁▂▃▄▅▆▇"
+};
+static const int g_animFrameCount = 14;
 
 // Window procedure forward declaration
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -25,6 +46,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 void
 InitDefaultConfig()
 {
+    g_config.clickMode = MODE_AUTO_REPEAT;
     g_config.startKey = VK_F5;
     g_config.stopKey = VK_F6;
     g_config.leftClick = true;
@@ -49,8 +71,9 @@ wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
     icc.dwICC = ICC_STANDARD_CLASSES | ICC_UPDOWN_CLASS;
     InitCommonControlsEx(&icc);
 
-    // Initialize default configuration
+    // Initialize default configuration, then load saved settings
     InitDefaultConfig();
+    LoadConfig(&g_config);
 
     // Initialize clicker module
     InitClicker();
@@ -119,8 +142,14 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             // Create UI controls
             CreateControls(hWnd, g_hInstance);
 
+            // Apply loaded config to UI
+            ApplyConfigToUI(&g_config);
+
             // Register hotkeys
             RegisterAppHotkeys(hWnd, g_config.startKey, g_config.stopKey);
+
+            // Update status display with current hotkey names
+            UpdateStatusDisplay(hWnd, false);
             return 0;
         }
 
@@ -132,15 +161,40 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 {
                     ReadSettingsFromUI(&g_config);
                     StartClicking(hWnd, &g_config);
+                    g_animFrame = 0;
+                    SetTimer(hWnd, TIMER_ID_ANIMATION, 80, nullptr);
                     UpdateStatusDisplay(hWnd, true);
+
+                    HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
+                    if (hModeCombo) EnableWindow(hModeCombo, FALSE);
                 }
             }
             else if (wParam == HOTKEY_ID_STOP)
             {
                 if (IsClickerRunning())
                 {
+                    KillTimer(hWnd, TIMER_ID_ANIMATION);
                     StopClicking(hWnd);
                     UpdateStatusDisplay(hWnd, false);
+
+                    HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
+                    if (hModeCombo) EnableWindow(hModeCombo, TRUE);
+                }
+            }
+            return 0;
+        }
+
+    case WM_TIMER:
+        {
+            if (wParam == TIMER_ID_ANIMATION)
+            {
+                HWND hStatus = GetControlHandle(IDC_STATIC_STATUS);
+                if (hStatus)
+                {
+                    wchar_t status[64];
+                    swprintf(status, 64, L"실행 중  %s", g_animFrames[g_animFrame]);
+                    SetWindowText(hStatus, status);
+                    g_animFrame = (g_animFrame + 1) % g_animFrameCount;
                 }
             }
             return 0;
@@ -150,8 +204,12 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
             if (IsClickerRunning())
             {
+                KillTimer(hWnd, TIMER_ID_ANIMATION);
                 StopClicking(hWnd);
                 UpdateStatusDisplay(hWnd, false);
+
+                HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
+                if (hModeCombo) EnableWindow(hModeCombo, TRUE);
             }
             return 0;
         }
@@ -213,6 +271,17 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     UpdateStatusDisplay(hWnd, false);
                 }
                 break;
+
+            case IDC_COMBO_MODE:
+                if (wmEvent == CBN_SELCHANGE)
+                {
+                    HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
+                    int modeIdx = (int)SendMessage(hModeCombo, CB_GETCURSEL, 0, 0);
+
+                    g_config.clickMode = (modeIdx == 1) ? MODE_HOLD : MODE_AUTO_REPEAT;
+                    UpdateStatusDisplay(hWnd, false);
+                }
+                break;
             }
             return 0;
         }
@@ -225,6 +294,13 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_DESTROY:
         {
+            // Save current settings before exit
+            ReadSettingsFromUI(&g_config);
+            SaveConfig(&g_config);
+
+            // Stop animation timer
+            KillTimer(hWnd, TIMER_ID_ANIMATION);
+
             // Stop clicking if running
             StopClicking(hWnd);
 

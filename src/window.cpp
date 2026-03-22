@@ -162,18 +162,18 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     HWND hStopCombo = CreateCombo(hWnd, hInstance, M + 165, y + 24, 60, 200, IDC_COMBO_STOP_KEY);
     PopulateHotkeyCombo(hStopCombo, VK_F6);
 
-    CreateLabel(hWnd, hInstance, L"속도", M + 245, y + 26, 35, 20);
-    HWND hEditCPS = CreateEdit(hWnd, hInstance, L"5", M + 280, y + 24, 45, 22, IDC_EDIT_CPS, true);
+    CreateLabel(hWnd, hInstance, L"속도", M + 240, y + 26, 35, 20);
+    HWND hEditCPS = CreateEdit(hWnd, hInstance, L"5", M + 275, y + 24, 50, 22, IDC_EDIT_CPS, true);
 
     HWND hSpin = CreateWindowEx(0, UPDOWN_CLASS, nullptr,
         WS_VISIBLE | WS_CHILD | UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS,
         0, 0, 0, 0, hWnd, (HMENU)IDC_SPIN_CPS, hInstance, nullptr);
     SendMessage(hSpin, UDM_SETBUDDY, (WPARAM)hEditCPS, 0);
-    SendMessage(hSpin, UDM_SETRANGE32, 1, 100);
+    SendMessage(hSpin, UDM_SETRANGE32, 1, 999);
     SendMessage(hSpin, UDM_SETPOS32, 0, 5);
     g_controls[IDC_SPIN_CPS] = hSpin;
 
-    CreateLabel(hWnd, hInstance, L"회/초", M + 330, y + 26, 40, 20);
+    CreateLabel(hWnd, hInstance, L"회/초", M + 330, y + 26, 45, 20);
 
     y += 60 + GAP;
 
@@ -186,7 +186,7 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     y += 55 + GAP;
 
     // ===== Keyboard Section =====
-    CreateGroupBox(hWnd, hInstance, L"키보드", M, y, W, 175);
+    CreateGroupBox(hWnd, hInstance, L"키보드", M, y, W, 203);
 
     int kx = M + 25;
     int ky = y + 25;
@@ -220,7 +220,7 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     CreateCheckbox(hWnd, hInstance, L"←", kx + 110, ky, 45, 22, IDC_CHK_KEY_LEFT);
     CreateCheckbox(hWnd, hInstance, L"→", kx + 165, ky, 45, 22, IDC_CHK_KEY_RIGHT);
 
-    // Row 5: Custom keys
+    // Row 5: Custom keys (1-4)
     ky += ROW_H;
     CreateLabel(hWnd, hInstance, L"사용자 정의:", kx, ky + 2, 95, 20);
     CreateEdit(hWnd, hInstance, L"", kx + 100, ky, 32, 22, IDC_EDIT_CUSTOM_1);
@@ -228,34 +228,51 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     CreateEdit(hWnd, hInstance, L"", kx + 180, ky, 32, 22, IDC_EDIT_CUSTOM_3);
     CreateEdit(hWnd, hInstance, L"", kx + 220, ky, 32, 22, IDC_EDIT_CUSTOM_4);
 
-    SendMessage(GetControlHandle(IDC_EDIT_CUSTOM_1), EM_SETLIMITTEXT, 1, 0);
-    SendMessage(GetControlHandle(IDC_EDIT_CUSTOM_2), EM_SETLIMITTEXT, 1, 0);
-    SendMessage(GetControlHandle(IDC_EDIT_CUSTOM_3), EM_SETLIMITTEXT, 1, 0);
-    SendMessage(GetControlHandle(IDC_EDIT_CUSTOM_4), EM_SETLIMITTEXT, 1, 0);
+    // Row 6: Custom keys (5-8)
+    ky += ROW_H;
+    CreateLabel(hWnd, hInstance, L"", kx, ky + 2, 95, 20);
+    CreateEdit(hWnd, hInstance, L"", kx + 100, ky, 32, 22, IDC_EDIT_CUSTOM_5);
+    CreateEdit(hWnd, hInstance, L"", kx + 140, ky, 32, 22, IDC_EDIT_CUSTOM_6);
+    CreateEdit(hWnd, hInstance, L"", kx + 180, ky, 32, 22, IDC_EDIT_CUSTOM_7);
+    CreateEdit(hWnd, hInstance, L"", kx + 220, ky, 32, 22, IDC_EDIT_CUSTOM_8);
 
-    y += 175 + GAP;
+    int customEditIds[] = {IDC_EDIT_CUSTOM_1, IDC_EDIT_CUSTOM_2, IDC_EDIT_CUSTOM_3, IDC_EDIT_CUSTOM_4,
+                           IDC_EDIT_CUSTOM_5, IDC_EDIT_CUSTOM_6, IDC_EDIT_CUSTOM_7, IDC_EDIT_CUSTOM_8};
+    for (int i = 0; i < MAX_CUSTOM_KEYS; i++)
+    {
+        SendMessage(GetControlHandle(customEditIds[i]), EM_SETLIMITTEXT, 1, 0);
+    }
+
+    y += 203 + GAP;
 
     // ===== Options Section =====
-    CreateGroupBox(hWnd, hInstance, L"옵션", M, y, W, 85);
+    CreateGroupBox(hWnd, hInstance, L"옵션", M, y, W, 110);
+
+    // Row 0: Mode
+    CreateLabel(hWnd, hInstance, L"모드", M + 20, y + 27, 35, 20);
+    HWND hModeCombo = CreateCombo(hWnd, hInstance, M + 55, y + 24, 100, 200, IDC_COMBO_MODE);
+    SendMessage(hModeCombo, CB_ADDSTRING, 0, (LPARAM)L"자동 반복");
+    SendMessage(hModeCombo, CB_ADDSTRING, 0, (LPARAM)L"홀드");
+    SendMessage(hModeCombo, CB_SETCURSEL, 0, 0);
 
     // Row 1: Rotation, Random, Timer
-    CreateCheckbox(hWnd, hInstance, L"순환", M + 20, y + 25, 55, 22, IDC_CHK_ROTATION);
-    CreateEdit(hWnd, hInstance, L"1234", M + 75, y + 24, 65, 22, IDC_EDIT_ROTATION_KEYS, false);
+    CreateCheckbox(hWnd, hInstance, L"순환", M + 20, y + 52, 55, 22, IDC_CHK_ROTATION);
+    CreateEdit(hWnd, hInstance, L"1234", M + 75, y + 51, 65, 22, IDC_EDIT_ROTATION_KEYS, false);
 
-    CreateCheckbox(hWnd, hInstance, L"랜덤 ±", M + 155, y + 25, 75, 22, IDC_CHK_RANDOM);
-    CreateEdit(hWnd, hInstance, L"20", M + 230, y + 24, 35, 22, IDC_EDIT_RANDOM_PCT, true);
-    CreateLabel(hWnd, hInstance, L"%", M + 267, y + 26, 20, 20);
+    CreateCheckbox(hWnd, hInstance, L"랜덤 ±", M + 155, y + 52, 75, 22, IDC_CHK_RANDOM);
+    CreateEdit(hWnd, hInstance, L"20", M + 230, y + 51, 35, 22, IDC_EDIT_RANDOM_PCT, true);
+    CreateLabel(hWnd, hInstance, L"%", M + 267, y + 53, 20, 20);
 
-    CreateCheckbox(hWnd, hInstance, L"타이머", M + 295, y + 25, 70, 22, IDC_CHK_TIMER);
+    CreateCheckbox(hWnd, hInstance, L"타이머", M + 295, y + 52, 70, 22, IDC_CHK_TIMER);
 
     // Row 2: Timer value and hint
-    CreateEdit(hWnd, hInstance, L"60", M + 295, y + 52, 40, 22, IDC_EDIT_TIMER_SEC, true);
-    CreateLabel(hWnd, hInstance, L"초", M + 338, y + 54, 25, 20);
+    CreateEdit(hWnd, hInstance, L"60", M + 295, y + 79, 40, 22, IDC_EDIT_TIMER_SEC, true);
+    CreateLabel(hWnd, hInstance, L"초", M + 338, y + 81, 25, 20);
 
     CreateLabel(hWnd, hInstance, L"순환: 지정키만 순환, 나머지 매번 실행",
-        M + 20, y + 54, 260, 20);
+        M + 20, y + 81, 260, 20);
 
-    y += 85 + GAP;
+    y += 110 + GAP;
 
     // ===== Bottom: Status & Buttons =====
     HWND hStatus = CreateLabel(hWnd, hInstance, L"준비 (F5: 시작, F6: 정지)",
@@ -271,6 +288,105 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
         WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
         M + W - 80, y, 80, 30, hWnd, (HMENU)IDC_BTN_EXIT, hInstance, nullptr);
     ApplyFont(hExitBtn);
+}
+
+void
+ApplyConfigToUI(const ClickerConfig *config)
+{
+    if (!config)
+    {
+        return;
+    }
+
+    // Mode
+    HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
+    if (hModeCombo)
+    {
+        SendMessage(hModeCombo, CB_SETCURSEL, config->clickMode == MODE_HOLD ? 1 : 0, 0);
+    }
+
+    // Hotkeys
+    HWND hStartCombo = GetControlHandle(IDC_COMBO_START_KEY);
+    HWND hStopCombo = GetControlHandle(IDC_COMBO_STOP_KEY);
+    if (hStartCombo)
+    {
+        SendMessage(hStartCombo, CB_SETCURSEL, GetComboIndexFromVK(config->startKey), 0);
+    }
+    if (hStopCombo)
+    {
+        SendMessage(hStopCombo, CB_SETCURSEL, GetComboIndexFromVK(config->stopKey), 0);
+    }
+
+    // Speed
+    HWND hSpin = GetControlHandle(IDC_SPIN_CPS);
+    if (hSpin)
+    {
+        SendMessage(hSpin, UDM_SETPOS32, 0, config->clicksPerSecond);
+    }
+
+    // Mouse
+    SendMessage(GetControlHandle(IDC_CHK_LCLICK), BM_SETCHECK,
+        config->leftClick ? BST_CHECKED : BST_UNCHECKED, 0);
+    SendMessage(GetControlHandle(IDC_CHK_RCLICK), BM_SETCHECK,
+        config->rightClick ? BST_CHECKED : BST_UNCHECKED, 0);
+
+    // Keyboard flags
+    struct { int id; DWORD flag; } keyChecks[] = {
+        {IDC_CHK_KEY_1, KEY_1}, {IDC_CHK_KEY_2, KEY_2},
+        {IDC_CHK_KEY_3, KEY_3}, {IDC_CHK_KEY_4, KEY_4},
+        {IDC_CHK_KEY_Q, KEY_Q}, {IDC_CHK_KEY_W, KEY_W},
+        {IDC_CHK_KEY_E, KEY_E}, {IDC_CHK_KEY_R, KEY_R},
+        {IDC_CHK_KEY_T, KEY_T}, {IDC_CHK_KEY_ENTER, KEY_ENTER},
+        {IDC_CHK_KEY_SPACE, KEY_SPACE}, {IDC_CHK_KEY_ESC, KEY_ESC},
+        {IDC_CHK_KEY_UP, KEY_UP}, {IDC_CHK_KEY_DOWN, KEY_DOWN},
+        {IDC_CHK_KEY_LEFT, KEY_LEFT}, {IDC_CHK_KEY_RIGHT, KEY_RIGHT},
+    };
+    for (auto &kc : keyChecks)
+    {
+        HWND h = GetControlHandle(kc.id);
+        if (h)
+        {
+            SendMessage(h, BM_SETCHECK,
+                (config->keyFlags & kc.flag) ? BST_CHECKED : BST_UNCHECKED, 0);
+        }
+    }
+
+    // Custom keys - convert vkCode back to character
+    int customEditIds[] = {IDC_EDIT_CUSTOM_1, IDC_EDIT_CUSTOM_2, IDC_EDIT_CUSTOM_3, IDC_EDIT_CUSTOM_4,
+                           IDC_EDIT_CUSTOM_5, IDC_EDIT_CUSTOM_6, IDC_EDIT_CUSTOM_7, IDC_EDIT_CUSTOM_8};
+    for (int i = 0; i < MAX_CUSTOM_KEYS; i++)
+    {
+        HWND hEdit = GetControlHandle(customEditIds[i]);
+        if (hEdit)
+        {
+            if (config->customKeys[i].enabled && config->customKeys[i].vkCode != 0)
+            {
+                UINT scanCode = MapVirtualKey(config->customKeys[i].vkCode, MAPVK_VK_TO_CHAR);
+                wchar_t ch[2] = {(wchar_t)scanCode, 0};
+                SetWindowText(hEdit, ch);
+            }
+            else
+            {
+                SetWindowText(hEdit, L"");
+            }
+        }
+    }
+
+    // Options
+    SendMessage(GetControlHandle(IDC_CHK_ROTATION), BM_SETCHECK,
+        config->rotationMode ? BST_CHECKED : BST_UNCHECKED, 0);
+    SetWindowText(GetControlHandle(IDC_EDIT_ROTATION_KEYS), config->rotationKeys);
+
+    SendMessage(GetControlHandle(IDC_CHK_RANDOM), BM_SETCHECK,
+        config->randomDelay ? BST_CHECKED : BST_UNCHECKED, 0);
+    wchar_t buf[32];
+    swprintf(buf, 32, L"%d", config->randomPercent);
+    SetWindowText(GetControlHandle(IDC_EDIT_RANDOM_PCT), buf);
+
+    SendMessage(GetControlHandle(IDC_CHK_TIMER), BM_SETCHECK,
+        config->useTimer ? BST_CHECKED : BST_UNCHECKED, 0);
+    swprintf(buf, 32, L"%d", config->timerSeconds);
+    SetWindowText(GetControlHandle(IDC_EDIT_TIMER_SEC), buf);
 }
 
 HWND
@@ -293,6 +409,11 @@ ReadSettingsFromUI(ClickerConfig *config)
     }
 
     wchar_t buf[32];
+
+    // Mode
+    HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
+    int modeIdx = (int)SendMessage(hModeCombo, CB_GETCURSEL, 0, 0);
+    config->clickMode = (modeIdx == 1) ? MODE_HOLD : MODE_AUTO_REPEAT;
 
     config->leftClick = (SendMessage(GetControlHandle(IDC_CHK_LCLICK),
         BM_GETCHECK, 0, 0) == BST_CHECKED);
@@ -334,7 +455,8 @@ ReadSettingsFromUI(ClickerConfig *config)
         config->keyFlags |= KEY_RIGHT;
 
     // Custom keys: enabled if edit box has a value
-    int customEditIds[] = {IDC_EDIT_CUSTOM_1, IDC_EDIT_CUSTOM_2, IDC_EDIT_CUSTOM_3, IDC_EDIT_CUSTOM_4};
+    int customEditIds[] = {IDC_EDIT_CUSTOM_1, IDC_EDIT_CUSTOM_2, IDC_EDIT_CUSTOM_3, IDC_EDIT_CUSTOM_4,
+                           IDC_EDIT_CUSTOM_5, IDC_EDIT_CUSTOM_6, IDC_EDIT_CUSTOM_7, IDC_EDIT_CUSTOM_8};
     for (int i = 0; i < MAX_CUSTOM_KEYS; i++)
     {
         HWND hEdit = GetControlHandle(customEditIds[i]);
@@ -367,9 +489,9 @@ ReadSettingsFromUI(ClickerConfig *config)
     {
         config->clicksPerSecond = 1;
     }
-    if (config->clicksPerSecond > 100)
+    if (config->clicksPerSecond > 999)
     {
-        config->clicksPerSecond = 100;
+        config->clicksPerSecond = 999;
     }
 
     // Options
