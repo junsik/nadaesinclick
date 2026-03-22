@@ -162,8 +162,8 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     HWND hStopCombo = CreateCombo(hWnd, hInstance, M + 165, y + 24, 60, 200, IDC_COMBO_STOP_KEY);
     PopulateHotkeyCombo(hStopCombo, VK_F6);
 
-    CreateLabel(hWnd, hInstance, L"속도", M + 240, y + 26, 35, 20);
-    HWND hEditCPS = CreateEdit(hWnd, hInstance, L"5", M + 275, y + 24, 50, 22, IDC_EDIT_CPS, true);
+    CreateLabel(hWnd, hInstance, L"속도", M + 235, y + 26, 35, 20);
+    HWND hEditCPS = CreateEdit(hWnd, hInstance, L"5", M + 270, y + 24, 60, 22, IDC_EDIT_CPS, true);
 
     HWND hSpin = CreateWindowEx(0, UPDOWN_CLASS, nullptr,
         WS_VISIBLE | WS_CHILD | UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS,
