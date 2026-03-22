@@ -142,6 +142,15 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
             // Register hotkeys
             RegisterAppHotkeys(hWnd, g_config.startKey, g_config.stopKey);
+
+            // Register Raw Input for keyboard (used in hold mode)
+            RAWINPUTDEVICE rid = {};
+            rid.usUsagePage = 0x01;        // Generic Desktop
+            rid.usUsage = 0x06;            // Keyboard
+            rid.dwFlags = RIDEV_INPUTSINK; // Receive input even when not focused
+            rid.hwndTarget = hWnd;
+            RegisterRawInputDevices(&rid, 1, sizeof(rid));
+
             return 0;
         }
 
@@ -203,6 +212,69 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
                 if (hModeCombo) EnableWindow(hModeCombo, TRUE);
             }
+            return 0;
+        }
+
+    case WM_INPUT:
+        {
+            if (g_config.clickMode != MODE_HOLD)
+            {
+                break;
+            }
+
+            UINT dwSize = sizeof(RAWINPUT);
+            RAWINPUT raw = {};
+            GetRawInputData((HRAWINPUT)lParam, RID_INPUT,
+                &raw, &dwSize, sizeof(RAWINPUTHEADER));
+
+            if (raw.header.dwType != RIM_TYPEKEYBOARD)
+            {
+                break;
+            }
+
+            RAWKEYBOARD &kb = raw.data.keyboard;
+
+            // Guard against invalid VKey values
+            if (kb.VKey == 0 || kb.VKey == 0xFF)
+            {
+                break;
+            }
+
+            // Only respond to the start hotkey
+            if (kb.VKey != (USHORT)g_config.startKey)
+            {
+                break;
+            }
+
+            if (!(kb.Flags & RI_KEY_BREAK))
+            {
+                // Key down (RI_KEY_MAKE)
+                if (!IsClickerRunning())
+                {
+                    ReadSettingsFromUI(&g_config);
+                    StartClicking(hWnd, &g_config);
+                    g_animFrame = 0;
+                    SetTimer(hWnd, TIMER_ID_ANIMATION, 80, nullptr);
+                    UpdateStatusDisplay(hWnd, true);
+
+                    HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
+                    if (hModeCombo) EnableWindow(hModeCombo, FALSE);
+                }
+            }
+            else
+            {
+                // Key up (RI_KEY_BREAK)
+                if (IsClickerRunning())
+                {
+                    KillTimer(hWnd, TIMER_ID_ANIMATION);
+                    StopClicking(hWnd);
+                    UpdateStatusDisplay(hWnd, false);
+
+                    HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
+                    if (hModeCombo) EnableWindow(hModeCombo, TRUE);
+                }
+            }
+
             return 0;
         }
 
