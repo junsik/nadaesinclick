@@ -124,6 +124,24 @@ IsRotationKey(const ClickerConfig *config, WORD vkCode)
     return false;
 }
 
+// Check if a key is physically held down
+static bool
+IsKeyHeld(WORD vkCode)
+{
+    return (GetAsyncKeyState(vkCode) & 0x8000) != 0;
+}
+
+// Send a key only if hold mode condition is met
+static void
+SendKeyWithMode(const ClickerConfig *config, WORD vkCode)
+{
+    if (config->clickMode == MODE_HOLD && !IsKeyHeld(vkCode))
+    {
+        return;
+    }
+    SendKey(vkCode);
+}
+
 void
 PerformActions(const ClickerConfig *config)
 {
@@ -132,7 +150,7 @@ PerformActions(const ClickerConfig *config)
         return;
     }
 
-    // Mouse clicks (always executed)
+    // Mouse clicks (always executed regardless of mode)
     if (config->leftClick)
     {
         ClickAtCurrentPos(true);
@@ -151,7 +169,8 @@ PerformActions(const ClickerConfig *config)
     {
         // Rotation mode:
         // 1. Press one rotation key in sequence
-        SendKey(config->rotationVkCodes[g_rotationIndex % config->rotationKeyCount]);
+        WORD rotKey = config->rotationVkCodes[g_rotationIndex % config->rotationKeyCount];
+        SendKeyWithMode(config, rotKey);
         g_rotationIndex++;
 
         // 2. Press all non-rotation keys (always-on keys)
@@ -159,7 +178,7 @@ PerformActions(const ClickerConfig *config)
         {
             if (!IsRotationKey(config, activeKeys[i]))
             {
-                SendKey(activeKeys[i]);
+                SendKeyWithMode(config, activeKeys[i]);
             }
         }
     }
@@ -168,7 +187,7 @@ PerformActions(const ClickerConfig *config)
         // Normal mode: press all keys
         for (int i = 0; i < keyCount; i++)
         {
-            SendKey(activeKeys[i]);
+            SendKeyWithMode(config, activeKeys[i]);
         }
     }
 }

@@ -142,15 +142,6 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
             // Register hotkeys
             RegisterAppHotkeys(hWnd, g_config.startKey, g_config.stopKey);
-
-            // Register Raw Input for keyboard (used in hold mode)
-            RAWINPUTDEVICE rid = {};
-            rid.usUsagePage = 0x01;        // Generic Desktop
-            rid.usUsage = 0x06;            // Keyboard
-            rid.dwFlags = RIDEV_INPUTSINK; // Receive input even when not focused
-            rid.hwndTarget = hWnd;
-            RegisterRawInputDevices(&rid, 1, sizeof(rid));
-
             return 0;
         }
 
@@ -215,69 +206,6 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         }
 
-    case WM_INPUT:
-        {
-            if (g_config.clickMode != MODE_HOLD)
-            {
-                break;
-            }
-
-            UINT dwSize = sizeof(RAWINPUT);
-            RAWINPUT raw = {};
-            GetRawInputData((HRAWINPUT)lParam, RID_INPUT,
-                &raw, &dwSize, sizeof(RAWINPUTHEADER));
-
-            if (raw.header.dwType != RIM_TYPEKEYBOARD)
-            {
-                break;
-            }
-
-            RAWKEYBOARD &kb = raw.data.keyboard;
-
-            // Guard against invalid VKey values
-            if (kb.VKey == 0 || kb.VKey == 0xFF)
-            {
-                break;
-            }
-
-            // Only respond to the start hotkey
-            if (kb.VKey != (USHORT)g_config.startKey)
-            {
-                break;
-            }
-
-            if (!(kb.Flags & RI_KEY_BREAK))
-            {
-                // Key down (RI_KEY_MAKE)
-                if (!IsClickerRunning())
-                {
-                    ReadSettingsFromUI(&g_config);
-                    StartClicking(hWnd, &g_config);
-                    g_animFrame = 0;
-                    SetTimer(hWnd, TIMER_ID_ANIMATION, 80, nullptr);
-                    UpdateStatusDisplay(hWnd, true);
-
-                    HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
-                    if (hModeCombo) EnableWindow(hModeCombo, FALSE);
-                }
-            }
-            else
-            {
-                // Key up (RI_KEY_BREAK)
-                if (IsClickerRunning())
-                {
-                    KillTimer(hWnd, TIMER_ID_ANIMATION);
-                    StopClicking(hWnd);
-                    UpdateStatusDisplay(hWnd, false);
-
-                    HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
-                    if (hModeCombo) EnableWindow(hModeCombo, TRUE);
-                }
-            }
-
-            return 0;
-        }
-
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
@@ -331,12 +259,7 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                     g_config.startKey = GetVKFromComboIndex(startIdx);
                     g_config.stopKey = GetVKFromComboIndex(stopIdx);
-
-                    // Only register hotkeys in auto-repeat mode
-                    if (g_config.clickMode == MODE_AUTO_REPEAT)
-                    {
-                        UpdateHotkeys(hWnd, g_config.startKey, g_config.stopKey);
-                    }
+                    UpdateHotkeys(hWnd, g_config.startKey, g_config.stopKey);
                     UpdateStatusDisplay(hWnd, false);
                 }
                 break;
@@ -346,21 +269,8 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 {
                     HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
                     int modeIdx = (int)SendMessage(hModeCombo, CB_GETCURSEL, 0, 0);
-                    bool holdMode = (modeIdx == 1);
 
-                    g_config.clickMode = holdMode ? MODE_HOLD : MODE_AUTO_REPEAT;
-
-                    // Toggle hotkey registration
-                    if (holdMode)
-                    {
-                        UnregisterAppHotkeys(hWnd);
-                    }
-                    else
-                    {
-                        RegisterAppHotkeys(hWnd, g_config.startKey, g_config.stopKey);
-                    }
-
-                    UpdateModeUI(holdMode);
+                    g_config.clickMode = (modeIdx == 1) ? MODE_HOLD : MODE_AUTO_REPEAT;
                     UpdateStatusDisplay(hWnd, false);
                 }
                 break;

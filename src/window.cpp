@@ -451,49 +451,10 @@ UpdateStatusDisplay(HWND hWnd, bool isRunning)
             SendMessage(hStartCombo, CB_GETLBTEXT, startIdx, (LPARAM)startKey);
             SendMessage(hStopCombo, CB_GETLBTEXT, stopIdx, (LPARAM)stopKey);
 
-            HWND hModeCb = GetControlHandle(IDC_COMBO_MODE);
-            int curModeIdx = (int)SendMessage(hModeCb, CB_GETCURSEL, 0, 0);
-
             wchar_t status[64];
-            if (curModeIdx == 1)
-            {
-                swprintf(status, 64, L"준비 (%s 홀드: 실행)", startKey);
-            }
-            else
-            {
-                swprintf(status, 64, L"준비 (%s: 시작, %s: 정지)", startKey, stopKey);
-            }
+            swprintf(status, 64, L"준비 (%s: 시작, %s: 정지)", startKey, stopKey);
             SetWindowText(hStatus, status);
         }
-    }
-}
-
-void
-UpdateModeUI(bool holdMode)
-{
-    // Stop key combo: disable in hold mode
-    HWND hStopCombo = GetControlHandle(IDC_COMBO_STOP_KEY);
-    if (hStopCombo)
-    {
-        EnableWindow(hStopCombo, !holdMode);
-    }
-
-    // Timer: disable in hold mode
-    HWND hTimerChk = GetControlHandle(IDC_CHK_TIMER);
-    HWND hTimerEdit = GetControlHandle(IDC_EDIT_TIMER_SEC);
-    if (hTimerChk)
-    {
-        EnableWindow(hTimerChk, !holdMode);
-    }
-    if (hTimerEdit)
-    {
-        EnableWindow(hTimerEdit, !holdMode);
-    }
-
-    // Uncheck timer if switching to hold mode
-    if (holdMode && hTimerChk)
-    {
-        SendMessage(hTimerChk, BM_SETCHECK, BST_UNCHECKED, 0);
     }
 }
 
