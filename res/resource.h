@@ -41,6 +41,7 @@
 #define IDC_EDIT_CPS 1031
 
 // Options
+#define IDC_COMBO_MODE 1038
 #define IDC_CHK_ROTATION 1032
 #define IDC_EDIT_ROTATION_KEYS 1033
 #define IDC_CHK_RANDOM 1034
@@ -58,5 +59,8 @@
 // Hotkey IDs
 #define HOTKEY_ID_START 2001
 #define HOTKEY_ID_STOP 2002
+
+// Timer IDs
+#define TIMER_ID_ANIMATION 3001
 
 #endif // RESOURCE_H
