@@ -21,7 +21,7 @@
 #define KEY_LEFT    0x4000
 #define KEY_RIGHT   0x8000
 
-#define MAX_CUSTOM_KEYS 4
+#define MAX_CUSTOM_KEYS 8
 
 // Click mode
 enum ClickMode

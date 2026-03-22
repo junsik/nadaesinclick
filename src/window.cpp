@@ -162,18 +162,18 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     HWND hStopCombo = CreateCombo(hWnd, hInstance, M + 165, y + 24, 60, 200, IDC_COMBO_STOP_KEY);
     PopulateHotkeyCombo(hStopCombo, VK_F6);
 
-    CreateLabel(hWnd, hInstance, L"속도", M + 245, y + 26, 35, 20);
-    HWND hEditCPS = CreateEdit(hWnd, hInstance, L"5", M + 280, y + 24, 45, 22, IDC_EDIT_CPS, true);
+    CreateLabel(hWnd, hInstance, L"속도", M + 240, y + 26, 35, 20);
+    HWND hEditCPS = CreateEdit(hWnd, hInstance, L"5", M + 275, y + 24, 50, 22, IDC_EDIT_CPS, true);
 
     HWND hSpin = CreateWindowEx(0, UPDOWN_CLASS, nullptr,
         WS_VISIBLE | WS_CHILD | UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS,
         0, 0, 0, 0, hWnd, (HMENU)IDC_SPIN_CPS, hInstance, nullptr);
     SendMessage(hSpin, UDM_SETBUDDY, (WPARAM)hEditCPS, 0);
-    SendMessage(hSpin, UDM_SETRANGE32, 1, 100);
+    SendMessage(hSpin, UDM_SETRANGE32, 1, 999);
     SendMessage(hSpin, UDM_SETPOS32, 0, 5);
     g_controls[IDC_SPIN_CPS] = hSpin;
 
-    CreateLabel(hWnd, hInstance, L"회/초", M + 330, y + 26, 40, 20);
+    CreateLabel(hWnd, hInstance, L"회/초", M + 330, y + 26, 45, 20);
 
     y += 60 + GAP;
 
@@ -186,7 +186,7 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     y += 55 + GAP;
 
     // ===== Keyboard Section =====
-    CreateGroupBox(hWnd, hInstance, L"키보드", M, y, W, 175);
+    CreateGroupBox(hWnd, hInstance, L"키보드", M, y, W, 203);
 
     int kx = M + 25;
     int ky = y + 25;
@@ -220,7 +220,7 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     CreateCheckbox(hWnd, hInstance, L"←", kx + 110, ky, 45, 22, IDC_CHK_KEY_LEFT);
     CreateCheckbox(hWnd, hInstance, L"→", kx + 165, ky, 45, 22, IDC_CHK_KEY_RIGHT);
 
-    // Row 5: Custom keys
+    // Row 5: Custom keys (1-4)
     ky += ROW_H;
     CreateLabel(hWnd, hInstance, L"사용자 정의:", kx, ky + 2, 95, 20);
     CreateEdit(hWnd, hInstance, L"", kx + 100, ky, 32, 22, IDC_EDIT_CUSTOM_1);
@@ -228,12 +228,22 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     CreateEdit(hWnd, hInstance, L"", kx + 180, ky, 32, 22, IDC_EDIT_CUSTOM_3);
     CreateEdit(hWnd, hInstance, L"", kx + 220, ky, 32, 22, IDC_EDIT_CUSTOM_4);
 
-    SendMessage(GetControlHandle(IDC_EDIT_CUSTOM_1), EM_SETLIMITTEXT, 1, 0);
-    SendMessage(GetControlHandle(IDC_EDIT_CUSTOM_2), EM_SETLIMITTEXT, 1, 0);
-    SendMessage(GetControlHandle(IDC_EDIT_CUSTOM_3), EM_SETLIMITTEXT, 1, 0);
-    SendMessage(GetControlHandle(IDC_EDIT_CUSTOM_4), EM_SETLIMITTEXT, 1, 0);
+    // Row 6: Custom keys (5-8)
+    ky += ROW_H;
+    CreateLabel(hWnd, hInstance, L"", kx, ky + 2, 95, 20);
+    CreateEdit(hWnd, hInstance, L"", kx + 100, ky, 32, 22, IDC_EDIT_CUSTOM_5);
+    CreateEdit(hWnd, hInstance, L"", kx + 140, ky, 32, 22, IDC_EDIT_CUSTOM_6);
+    CreateEdit(hWnd, hInstance, L"", kx + 180, ky, 32, 22, IDC_EDIT_CUSTOM_7);
+    CreateEdit(hWnd, hInstance, L"", kx + 220, ky, 32, 22, IDC_EDIT_CUSTOM_8);
 
-    y += 175 + GAP;
+    int customEditIds[] = {IDC_EDIT_CUSTOM_1, IDC_EDIT_CUSTOM_2, IDC_EDIT_CUSTOM_3, IDC_EDIT_CUSTOM_4,
+                           IDC_EDIT_CUSTOM_5, IDC_EDIT_CUSTOM_6, IDC_EDIT_CUSTOM_7, IDC_EDIT_CUSTOM_8};
+    for (int i = 0; i < MAX_CUSTOM_KEYS; i++)
+    {
+        SendMessage(GetControlHandle(customEditIds[i]), EM_SETLIMITTEXT, 1, 0);
+    }
+
+    y += 203 + GAP;
 
     // ===== Options Section =====
     CreateGroupBox(hWnd, hInstance, L"옵션", M, y, W, 110);
@@ -346,7 +356,8 @@ ReadSettingsFromUI(ClickerConfig *config)
         config->keyFlags |= KEY_RIGHT;
 
     // Custom keys: enabled if edit box has a value
-    int customEditIds[] = {IDC_EDIT_CUSTOM_1, IDC_EDIT_CUSTOM_2, IDC_EDIT_CUSTOM_3, IDC_EDIT_CUSTOM_4};
+    int customEditIds[] = {IDC_EDIT_CUSTOM_1, IDC_EDIT_CUSTOM_2, IDC_EDIT_CUSTOM_3, IDC_EDIT_CUSTOM_4,
+                           IDC_EDIT_CUSTOM_5, IDC_EDIT_CUSTOM_6, IDC_EDIT_CUSTOM_7, IDC_EDIT_CUSTOM_8};
     for (int i = 0; i < MAX_CUSTOM_KEYS; i++)
     {
         HWND hEdit = GetControlHandle(customEditIds[i]);
@@ -379,9 +390,9 @@ ReadSettingsFromUI(ClickerConfig *config)
     {
         config->clicksPerSecond = 1;
     }
-    if (config->clicksPerSecond > 100)
+    if (config->clicksPerSecond > 999)
     {
-        config->clicksPerSecond = 100;
+        config->clicksPerSecond = 999;
     }
 
     // Options
