@@ -5,7 +5,7 @@
 
 // Window dimensions
 #define WINDOW_WIDTH    415
-#define WINDOW_HEIGHT   500
+#define WINDOW_HEIGHT   525
 
 // Initialize modern UI font (Segoe UI)
 void InitUIFont();

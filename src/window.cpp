@@ -236,26 +236,33 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     y += 175 + GAP;
 
     // ===== Options Section =====
-    CreateGroupBox(hWnd, hInstance, L"옵션", M, y, W, 85);
+    CreateGroupBox(hWnd, hInstance, L"옵션", M, y, W, 110);
+
+    // Row 0: Mode
+    CreateLabel(hWnd, hInstance, L"모드", M + 20, y + 27, 35, 20);
+    HWND hModeCombo = CreateCombo(hWnd, hInstance, M + 55, y + 24, 100, 200, IDC_COMBO_MODE);
+    SendMessage(hModeCombo, CB_ADDSTRING, 0, (LPARAM)L"자동 반복");
+    SendMessage(hModeCombo, CB_ADDSTRING, 0, (LPARAM)L"홀드");
+    SendMessage(hModeCombo, CB_SETCURSEL, 0, 0);
 
     // Row 1: Rotation, Random, Timer
-    CreateCheckbox(hWnd, hInstance, L"순환", M + 20, y + 25, 55, 22, IDC_CHK_ROTATION);
-    CreateEdit(hWnd, hInstance, L"1234", M + 75, y + 24, 65, 22, IDC_EDIT_ROTATION_KEYS, false);
+    CreateCheckbox(hWnd, hInstance, L"순환", M + 20, y + 52, 55, 22, IDC_CHK_ROTATION);
+    CreateEdit(hWnd, hInstance, L"1234", M + 75, y + 51, 65, 22, IDC_EDIT_ROTATION_KEYS, false);
 
-    CreateCheckbox(hWnd, hInstance, L"랜덤 ±", M + 155, y + 25, 75, 22, IDC_CHK_RANDOM);
-    CreateEdit(hWnd, hInstance, L"20", M + 230, y + 24, 35, 22, IDC_EDIT_RANDOM_PCT, true);
-    CreateLabel(hWnd, hInstance, L"%", M + 267, y + 26, 20, 20);
+    CreateCheckbox(hWnd, hInstance, L"랜덤 ±", M + 155, y + 52, 75, 22, IDC_CHK_RANDOM);
+    CreateEdit(hWnd, hInstance, L"20", M + 230, y + 51, 35, 22, IDC_EDIT_RANDOM_PCT, true);
+    CreateLabel(hWnd, hInstance, L"%", M + 267, y + 53, 20, 20);
 
-    CreateCheckbox(hWnd, hInstance, L"타이머", M + 295, y + 25, 70, 22, IDC_CHK_TIMER);
+    CreateCheckbox(hWnd, hInstance, L"타이머", M + 295, y + 52, 70, 22, IDC_CHK_TIMER);
 
     // Row 2: Timer value and hint
-    CreateEdit(hWnd, hInstance, L"60", M + 295, y + 52, 40, 22, IDC_EDIT_TIMER_SEC, true);
-    CreateLabel(hWnd, hInstance, L"초", M + 338, y + 54, 25, 20);
+    CreateEdit(hWnd, hInstance, L"60", M + 295, y + 79, 40, 22, IDC_EDIT_TIMER_SEC, true);
+    CreateLabel(hWnd, hInstance, L"초", M + 338, y + 81, 25, 20);
 
     CreateLabel(hWnd, hInstance, L"순환: 지정키만 순환, 나머지 매번 실행",
-        M + 20, y + 54, 260, 20);
+        M + 20, y + 81, 260, 20);
 
-    y += 85 + GAP;
+    y += 110 + GAP;
 
     // ===== Bottom: Status & Buttons =====
     HWND hStatus = CreateLabel(hWnd, hInstance, L"준비 (F5: 시작, F6: 정지)",
@@ -293,6 +300,11 @@ ReadSettingsFromUI(ClickerConfig *config)
     }
 
     wchar_t buf[32];
+
+    // Mode
+    HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
+    int modeIdx = (int)SendMessage(hModeCombo, CB_GETCURSEL, 0, 0);
+    config->clickMode = (modeIdx == 1) ? MODE_HOLD : MODE_AUTO_REPEAT;
 
     config->leftClick = (SendMessage(GetControlHandle(IDC_CHK_LCLICK),
         BM_GETCHECK, 0, 0) == BST_CHECKED);
@@ -439,8 +451,18 @@ UpdateStatusDisplay(HWND hWnd, bool isRunning)
             SendMessage(hStartCombo, CB_GETLBTEXT, startIdx, (LPARAM)startKey);
             SendMessage(hStopCombo, CB_GETLBTEXT, stopIdx, (LPARAM)stopKey);
 
+            HWND hModeCb = GetControlHandle(IDC_COMBO_MODE);
+            int curModeIdx = (int)SendMessage(hModeCb, CB_GETCURSEL, 0, 0);
+
             wchar_t status[64];
-            swprintf(status, 64, L"준비 (%s: 시작, %s: 정지)", startKey, stopKey);
+            if (curModeIdx == 1)
+            {
+                swprintf(status, 64, L"준비 (%s 홀드: 실행)", startKey);
+            }
+            else
+            {
+                swprintf(status, 64, L"준비 (%s: 시작, %s: 정지)", startKey, stopKey);
+            }
             SetWindowText(hStatus, status);
         }
     }
