@@ -164,6 +164,7 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
 
     CreateLabel(hWnd, hInstance, L"속도", M + 235, y + 26, 35, 20);
     HWND hEditCPS = CreateEdit(hWnd, hInstance, L"5", M + 270, y + 24, 60, 22, IDC_EDIT_CPS, true);
+    SendMessage(hEditCPS, EM_SETLIMITTEXT, 3, 0);
 
     HWND hSpin = CreateWindowEx(0, UPDOWN_CLASS, nullptr,
         WS_VISIBLE | WS_CHILD | UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS,
