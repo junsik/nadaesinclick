@@ -1,4 +1,5 @@
 #include "clicker.h"
+#include "config.h"
 #include "hotkey.h"
 #include "resource.h"
 #include "window.h"
@@ -70,8 +71,9 @@ wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
     icc.dwICC = ICC_STANDARD_CLASSES | ICC_UPDOWN_CLASS;
     InitCommonControlsEx(&icc);
 
-    // Initialize default configuration
+    // Initialize default configuration, then load saved settings
     InitDefaultConfig();
+    LoadConfig(&g_config);
 
     // Initialize clicker module
     InitClicker();
@@ -140,8 +142,14 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             // Create UI controls
             CreateControls(hWnd, g_hInstance);
 
+            // Apply loaded config to UI
+            ApplyConfigToUI(&g_config);
+
             // Register hotkeys
             RegisterAppHotkeys(hWnd, g_config.startKey, g_config.stopKey);
+
+            // Update status display with current hotkey names
+            UpdateStatusDisplay(hWnd, false);
             return 0;
         }
 
@@ -286,6 +294,10 @@ WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_DESTROY:
         {
+            // Save current settings before exit
+            ReadSettingsFromUI(&g_config);
+            SaveConfig(&g_config);
+
             // Stop animation timer
             KillTimer(hWnd, TIMER_ID_ANIMATION);
 

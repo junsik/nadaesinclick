@@ -26,6 +26,9 @@ HWND GetControlHandle(int controlId);
 struct ClickerConfig;
 void ReadSettingsFromUI(ClickerConfig *config);
 
+// Apply config values to UI controls
+void ApplyConfigToUI(const ClickerConfig *config);
+
 // Update status display
 void UpdateStatusDisplay(HWND hWnd, bool isRunning);
 

@@ -290,6 +290,105 @@ CreateControls(HWND hWnd, HINSTANCE hInstance)
     ApplyFont(hExitBtn);
 }
 
+void
+ApplyConfigToUI(const ClickerConfig *config)
+{
+    if (!config)
+    {
+        return;
+    }
+
+    // Mode
+    HWND hModeCombo = GetControlHandle(IDC_COMBO_MODE);
+    if (hModeCombo)
+    {
+        SendMessage(hModeCombo, CB_SETCURSEL, config->clickMode == MODE_HOLD ? 1 : 0, 0);
+    }
+
+    // Hotkeys
+    HWND hStartCombo = GetControlHandle(IDC_COMBO_START_KEY);
+    HWND hStopCombo = GetControlHandle(IDC_COMBO_STOP_KEY);
+    if (hStartCombo)
+    {
+        SendMessage(hStartCombo, CB_SETCURSEL, GetComboIndexFromVK(config->startKey), 0);
+    }
+    if (hStopCombo)
+    {
+        SendMessage(hStopCombo, CB_SETCURSEL, GetComboIndexFromVK(config->stopKey), 0);
+    }
+
+    // Speed
+    HWND hSpin = GetControlHandle(IDC_SPIN_CPS);
+    if (hSpin)
+    {
+        SendMessage(hSpin, UDM_SETPOS32, 0, config->clicksPerSecond);
+    }
+
+    // Mouse
+    SendMessage(GetControlHandle(IDC_CHK_LCLICK), BM_SETCHECK,
+        config->leftClick ? BST_CHECKED : BST_UNCHECKED, 0);
+    SendMessage(GetControlHandle(IDC_CHK_RCLICK), BM_SETCHECK,
+        config->rightClick ? BST_CHECKED : BST_UNCHECKED, 0);
+
+    // Keyboard flags
+    struct { int id; DWORD flag; } keyChecks[] = {
+        {IDC_CHK_KEY_1, KEY_1}, {IDC_CHK_KEY_2, KEY_2},
+        {IDC_CHK_KEY_3, KEY_3}, {IDC_CHK_KEY_4, KEY_4},
+        {IDC_CHK_KEY_Q, KEY_Q}, {IDC_CHK_KEY_W, KEY_W},
+        {IDC_CHK_KEY_E, KEY_E}, {IDC_CHK_KEY_R, KEY_R},
+        {IDC_CHK_KEY_T, KEY_T}, {IDC_CHK_KEY_ENTER, KEY_ENTER},
+        {IDC_CHK_KEY_SPACE, KEY_SPACE}, {IDC_CHK_KEY_ESC, KEY_ESC},
+        {IDC_CHK_KEY_UP, KEY_UP}, {IDC_CHK_KEY_DOWN, KEY_DOWN},
+        {IDC_CHK_KEY_LEFT, KEY_LEFT}, {IDC_CHK_KEY_RIGHT, KEY_RIGHT},
+    };
+    for (auto &kc : keyChecks)
+    {
+        HWND h = GetControlHandle(kc.id);
+        if (h)
+        {
+            SendMessage(h, BM_SETCHECK,
+                (config->keyFlags & kc.flag) ? BST_CHECKED : BST_UNCHECKED, 0);
+        }
+    }
+
+    // Custom keys - convert vkCode back to character
+    int customEditIds[] = {IDC_EDIT_CUSTOM_1, IDC_EDIT_CUSTOM_2, IDC_EDIT_CUSTOM_3, IDC_EDIT_CUSTOM_4,
+                           IDC_EDIT_CUSTOM_5, IDC_EDIT_CUSTOM_6, IDC_EDIT_CUSTOM_7, IDC_EDIT_CUSTOM_8};
+    for (int i = 0; i < MAX_CUSTOM_KEYS; i++)
+    {
+        HWND hEdit = GetControlHandle(customEditIds[i]);
+        if (hEdit)
+        {
+            if (config->customKeys[i].enabled && config->customKeys[i].vkCode != 0)
+            {
+                UINT scanCode = MapVirtualKey(config->customKeys[i].vkCode, MAPVK_VK_TO_CHAR);
+                wchar_t ch[2] = {(wchar_t)scanCode, 0};
+                SetWindowText(hEdit, ch);
+            }
+            else
+            {
+                SetWindowText(hEdit, L"");
+            }
+        }
+    }
+
+    // Options
+    SendMessage(GetControlHandle(IDC_CHK_ROTATION), BM_SETCHECK,
+        config->rotationMode ? BST_CHECKED : BST_UNCHECKED, 0);
+    SetWindowText(GetControlHandle(IDC_EDIT_ROTATION_KEYS), config->rotationKeys);
+
+    SendMessage(GetControlHandle(IDC_CHK_RANDOM), BM_SETCHECK,
+        config->randomDelay ? BST_CHECKED : BST_UNCHECKED, 0);
+    wchar_t buf[32];
+    swprintf(buf, 32, L"%d", config->randomPercent);
+    SetWindowText(GetControlHandle(IDC_EDIT_RANDOM_PCT), buf);
+
+    SendMessage(GetControlHandle(IDC_CHK_TIMER), BM_SETCHECK,
+        config->useTimer ? BST_CHECKED : BST_UNCHECKED, 0);
+    swprintf(buf, 32, L"%d", config->timerSeconds);
+    SetWindowText(GetControlHandle(IDC_EDIT_TIMER_SEC), buf);
+}
+
 HWND
 GetControlHandle(int controlId)
 {
